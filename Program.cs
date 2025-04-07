@@ -1,26 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
 
-class Program
+class NetworkRouting
 {
+    static HashSet<string> downNodes = new HashSet<string> { "B", "D" }; // Change as needed
+
+    static bool IsUp(string node)
+    {
+        return !downNodes.Contains(node);
+    }
+
+    public static List<string> FindShortestPath(Dictionary<string, List<string>> graph, string start, string end)
+    {
+        Queue<List<string>> queue = new Queue<List<string>>();
+        HashSet<string> visited = new HashSet<string>();
+
+        queue.Enqueue(new List<string> { start });
+
+        while (queue.Count > 0)
+        {
+            var path = queue.Dequeue();
+            var current = path[path.Count - 1];
+
+            if (!IsUp(current)) continue;
+            if (current == end) return path;
+
+            if (!visited.Contains(current))
+            {
+                visited.Add(current);
+
+                if (graph.ContainsKey(current))
+                {
+                    foreach (var neighbor in graph[current])
+                    {
+                        if (!visited.Contains(neighbor) && IsUp(neighbor))
+                        {
+                            var newPath = new List<string>(path) { neighbor };
+                            queue.Enqueue(newPath);
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     static void Main()
     {
-        Dictionary<string, double> employeePay = new Dictionary<string, double>();
+        var graph = new Dictionary<string, List<string>> {
+            { "A", new List<string> { "B", "C", "D" } },
+            { "B", new List<string> { "E" } },
+            { "C", new List<string> { "E", "F" } },
+            { "D", new List<string> { "G" } },
+            { "E", new List<string> { "F" } },
+            { "F", new List<string> { "G" } }
+        };
 
-        // (ii) Add Homer and Monty
-        employeePay["Homer"] = 20000;
-        employeePay["Monty"] = 500000;
+        string start = "A";
+        string end = "G";
 
-        employeePay.Remove("Homer");
+        var path = FindShortestPath(graph, start, end);
 
-        if (employeePay.ContainsKey("Carl"))
-        {
-            employeePay["Carl"] -= 1000;
-        }
-
-        foreach (var key in employeePay.Keys.ToList())
-        {
-            employeePay[key] = employeePay[key] * 0.1;
-        }
+        if (path != null)
+            Console.WriteLine("Shortest Path: " + string.Join(" -> ", path));
+        else
+            Console.WriteLine("No available path.");
     }
 }
